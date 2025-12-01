@@ -27,6 +27,7 @@ export default function RestaurantList({ places, userLocation }: RestaurantListP
     const [expandedPlaceId, setExpandedPlaceId] = React.useState<string | null>(null);
     const [placeDetails, setPlaceDetails] = React.useState<Record<string, google.maps.places.PlaceResult>>({});
     const [isLoadingDetails, setIsLoadingDetails] = React.useState(false);
+    const [showOpenOnly, setShowOpenOnly] = React.useState(true);
 
     const sortedPlaces = React.useMemo(() => {
         if (!places) return [];
@@ -43,6 +44,16 @@ export default function RestaurantList({ places, userLocation }: RestaurantListP
             return { ...place, distance };
         }).sort((a, b) => a.distance - b.distance);
     }, [places, userLocation]);
+
+    const filteredPlaces = React.useMemo(() => {
+        if (!showOpenOnly) return sortedPlaces;
+        return sortedPlaces.filter((place: any) => {
+            // 如果沒有營業時間資訊，預設顯示 (避免誤殺)
+            if (!place.opening_hours) return true;
+            // @ts-ignore: open_now is deprecated but reliable for nearbySearch
+            return place.opening_hours.open_now !== false;
+        });
+    }, [sortedPlaces, showOpenOnly]);
 
     const handlePlaceClick = (placeId: string) => {
         if (expandedPlaceId === placeId) {
@@ -97,9 +108,27 @@ export default function RestaurantList({ places, userLocation }: RestaurantListP
 
     return (
         <div className="h-full w-full overflow-y-auto bg-white p-4">
-            <h2 className="text-xl font-bold mb-4 text-gray-900">附近店家 ({places.length})</h2>
+
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">附近店家 ({filteredPlaces.length})</h2>
+                <label className="flex items-center cursor-pointer select-none">
+                    <div className="relative">
+                        <input
+                            type="checkbox"
+                            className="sr-only"
+                            checked={showOpenOnly}
+                            onChange={e => setShowOpenOnly(e.target.checked)}
+                        />
+                        <div className={`block w-10 h-6 rounded-full transition-colors ${showOpenOnly ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
+                        <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${showOpenOnly ? 'transform translate-x-4' : ''}`}></div>
+                    </div>
+                    <div className="ml-3 text-sm font-medium text-gray-700">
+                        只顯示營業中
+                    </div>
+                </label>
+            </div>
             <div className="space-y-4">
-                {sortedPlaces.map((place: any) => {
+                {filteredPlaces.map((place: any) => {
                     const isExpanded = expandedPlaceId === place.place_id;
                     const details = placeDetails[place.place_id];
 
