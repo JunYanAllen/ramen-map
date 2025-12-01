@@ -142,10 +142,14 @@ export default function RestaurantList({ places, userLocation }: RestaurantListP
 
                                     // 1. 優先使用詳細資料 (最準確)
                                     if (detail?.opening_hours) {
-                                        isOpen = detail.opening_hours.isOpen ? (detail.opening_hours.isOpen() || null) : null;
+                                        const result = detail.opening_hours.isOpen ? detail.opening_hours.isOpen() : undefined;
+                                        if (result !== undefined) {
+                                            isOpen = result;
+                                        }
                                     }
-                                    // 2. 使用列表資料 (nearbySearch)
-                                    else if (place.opening_hours) {
+
+                                    // 2. 如果尚未確定 (null)，回退使用列表資料 (nearbySearch)
+                                    if (isOpen === null && place.opening_hours) {
                                         // 優先檢查 open_now (雖然過時，但在 nearbySearch 中最可靠)
                                         // @ts-ignore: open_now is deprecated but necessary for nearbySearch results
                                         if (place.opening_hours.open_now !== undefined) {
