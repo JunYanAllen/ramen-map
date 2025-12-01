@@ -20,6 +20,7 @@ export default function Home() {
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
     libraries: libraries,
+    language: "zh-TW",
   });
 
   const [displayFood, setDisplayFood] = useState<FoodOption | null>(null);

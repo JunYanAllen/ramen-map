@@ -61,6 +61,16 @@ export default function RestaurantList({ places, userLocation }: RestaurantListP
             }, (place, status) => {
                 setIsLoadingDetails(false);
                 if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+                    // Sort reviews to prioritize Traditional Chinese
+                    if (place.reviews) {
+                        place.reviews.sort((a: any, b: any) => {
+                            const aIsZh = a.language === 'zh-TW' || a.language === 'zh';
+                            const bIsZh = b.language === 'zh-TW' || b.language === 'zh';
+                            if (aIsZh && !bIsZh) return -1;
+                            if (!aIsZh && bIsZh) return 1;
+                            return 0;
+                        });
+                    }
                     setPlaceDetails(prev => ({ ...prev, [placeId]: place }));
                 }
             });
