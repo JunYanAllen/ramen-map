@@ -1,65 +1,287 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import RamenMap from "@/components/Map";
+import RestaurantList from "@/components/RestaurantList";
+import { FOOD_OPTIONS, FoodOption } from "./data/foodOptions";
+import { useJsApiLoader, Autocomplete, GoogleMap, Marker } from '@react-google-maps/api';
+import Cookies from 'js-cookie';
+
+const libraries: ("places")[] = ["places"];
+
+interface UserLocation {
+  lat: number;
+  lng: number;
+  address: string;
+}
 
 export default function Home() {
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
+    libraries: libraries,
+  });
+
+  const [displayFood, setDisplayFood] = useState<FoodOption | null>(null);
+  const [selectedFood, setSelectedFood] = useState<FoodOption | null>(null);
+  const [places, setPlaces] = useState<google.maps.places.PlaceResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Location State
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [searchRadius, setSearchRadius] = useState(500); // Default 0.5km
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+
+  // Load location from cookie
+  useEffect(() => {
+    const savedLocation = Cookies.get('user_location');
+    if (savedLocation) {
+      try {
+        setUserLocation(JSON.parse(savedLocation));
+      } catch (e) {
+        console.error("Failed to parse location cookie", e);
+        setIsLocationModalOpen(true);
+      }
+    } else {
+      setIsLocationModalOpen(true);
+    }
+  }, []);
+
+  const handleRandomSelect = () => {
+    if (!userLocation) {
+      setIsLocationModalOpen(true);
+      return;
+    }
+    setIsSearching(true);
+    // 簡單的隨機效果動畫
+    let count = 0;
+    const interval = setInterval(() => {
+      const randomIndex = Math.floor(Math.random() * FOOD_OPTIONS.length);
+      const randomFood = FOOD_OPTIONS[randomIndex];
+      setDisplayFood(randomFood);
+      count++;
+      if (count > 10) {
+        clearInterval(interval);
+        setSelectedFood(randomFood); // 只有最後一次才設定搜尋關鍵字
+        setIsSearching(false);
+      }
+    }, 100);
+  };
+
+  const updateLocation = (lat: number, lng: number, address?: string) => {
+    const newLocation = { lat, lng, address: address || "地圖選定位置" };
+    setUserLocation(newLocation);
+    Cookies.set('user_location', JSON.stringify(newLocation), { expires: 365 });
+
+    // Pan map if it exists
+    if (mapRef.current) {
+      mapRef.current.panTo({ lat, lng });
+    }
+  };
+
+  const handlePlaceChanged = () => {
+    if (autocompleteRef.current) {
+      const place = autocompleteRef.current.getPlace();
+      if (place.geometry && place.geometry.location) {
+        updateLocation(
+          place.geometry.location.lat(),
+          place.geometry.location.lng(),
+          place.formatted_address || place.name
+        );
+      }
+    }
+  };
+
+  const handleMapClick = (e: google.maps.MapMouseEvent) => {
+    if (e.latLng) {
+      const lat = e.latLng.lat();
+      const lng = e.latLng.lng();
+
+      // Reverse Geocoding
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        if (status === "OK" && results && results[0]) {
+          updateLocation(lat, lng, results[0].formatted_address);
+        } else {
+          updateLocation(lat, lng);
+        }
+      });
+    }
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        updateLocation(
+          position.coords.latitude,
+          position.coords.longitude,
+          "目前位置"
+        );
+      });
+    }
+  };
+
+  if (!isLoaded) return <div className="flex items-center justify-center h-screen">Loading...</div>;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="relative h-screen w-screen overflow-hidden flex flex-col md:flex-row">
+      {/* 列表區 - 佔滿全螢幕 */}
+      <div className="w-full h-full flex flex-col bg-white shadow-xl">
+        {/* 控制區 */}
+        <div className="p-6 bg-white z-20 shadow-sm">
+          <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+            <h1 className="text-2xl font-bold text-gray-800">今天吃什麼？</h1>
+            <div className="flex items-center gap-3">
+              <select
+                value={searchRadius}
+                onChange={(e) => setSearchRadius(Number(e.target.value))}
+                className="text-sm border border-gray-300 rounded-lg p-1 text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                <option value={500}>500m</option>
+                <option value={1000}>1km</option>
+                <option value={1500}>1.5km</option>
+                <option value={3000}>3km</option>
+                <option value={5000}>5km</option>
+              </select>
+              <button
+                onClick={() => setIsLocationModalOpen(true)}
+                className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+              >
+                📍 {userLocation ? userLocation.address : "設定位置"}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleRandomSelect}
+              disabled={isSearching}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-1"
+            >
+              {isSearching ? "選擇中..." : "🎲 隨機選擇"}
+            </button>
+            <div className="flex-1 text-center border-b-2 border-blue-500 pb-1 min-w-[150px]">
+              <div className="text-xl font-bold text-gray-700">
+                {displayFood ? displayFood.query : "請選擇"}
+              </div>
+              {displayFood && (
+                <div className="text-sm text-gray-500 mt-1">
+                  {displayFood.category}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 列表區 */}
+        <div className="flex-1 overflow-hidden relative">
+          <RestaurantList places={places} userLocation={userLocation} />
+        </div>
+      </div>
+
+      {/* 隱藏的地圖元件 (保留搜尋功能) */}
+      <div className="hidden">
+        <RamenMap
+          keyword={selectedFood?.query || ""}
+          places={places}
+          onPlacesFound={setPlaces}
+          customLocation={userLocation}
+          radius={searchRadius}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+      </div>
+
+      {/* 位置設定 Modal */}
+      {isLocationModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-2xl shadow-2xl flex flex-col h-[85vh]">
+            <h2 className="text-2xl font-bold mb-2 text-center">設定您的位置</h2>
+            <p className="text-gray-500 text-center mb-6">請選擇一種方式來設定搜尋中心</p>
+
+            <div className="space-y-6 flex-1 flex flex-col overflow-y-auto px-2">
+
+              {/* 選項 1: 系統定位 */}
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                <div className="font-bold text-blue-800 mb-2 flex items-center gap-2">
+                  <span className="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                  使用系統定位
+                </div>
+                <button
+                  onClick={handleUseCurrentLocation}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  📍 取得目前位置
+                </button>
+              </div>
+
+              {/* 選項 2: 輸入地址 */}
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <div className="font-bold text-gray-800 mb-2 flex items-center gap-2">
+                  <span className="bg-gray-200 text-gray-800 rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
+                  輸入地址搜尋
+                </div>
+                <Autocomplete
+                  onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
+                  onPlaceChanged={handlePlaceChanged}
+                >
+                  <input
+                    type="text"
+                    placeholder="例如：台北 101、信義區..."
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                  />
+                </Autocomplete>
+              </div>
+
+              {/* 選項 3: 地圖選點 */}
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 flex-1 flex flex-col min-h-[300px]">
+                <div className="font-bold text-gray-800 mb-2 flex items-center gap-2">
+                  <span className="bg-gray-200 text-gray-800 rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
+                  在地圖上選擇
+                </div>
+                <div className="flex-1 rounded-lg overflow-hidden border border-gray-300 relative">
+                  <GoogleMap
+                    mapContainerStyle={{ width: '100%', height: '100%' }}
+                    center={userLocation || { lat: 25.0330, lng: 121.5654 }} // Default to Taipei 101
+                    zoom={15}
+                    onClick={handleMapClick}
+                    onLoad={map => { mapRef.current = map; }}
+                    options={{
+                      streetViewControl: false,
+                      mapTypeControl: false,
+                      fullscreenControl: false,
+                    }}
+                  >
+                    {userLocation && (
+                      <Marker position={userLocation} />
+                    )}
+                  </GoogleMap>
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-bold text-gray-700 pointer-events-none whitespace-nowrap">
+                    {userLocation ? "點擊地圖可更改位置" : "請點擊地圖選擇位置"}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div className="pt-4 border-t flex justify-between items-center mt-4">
+              <div className="text-sm text-gray-600 truncate max-w-[60%]">
+                目前選擇：<span className="font-bold text-gray-800">{userLocation?.address || "尚未選擇"}</span>
+              </div>
+              <div className="flex gap-2">
+                {userLocation && (
+                  <button
+                    onClick={() => setIsLocationModalOpen(false)}
+                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg shadow"
+                  >
+                    確認使用此位置
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      )}
+    </main>
   );
 }
