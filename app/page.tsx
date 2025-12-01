@@ -127,7 +127,7 @@ export default function Home() {
   if (!isLoaded) return <div className="flex items-center justify-center h-screen">Loading...</div>;
 
   return (
-    <main className="relative h-screen w-screen overflow-hidden flex flex-col md:flex-row">
+    <main className="relative h-dvh w-full overflow-hidden flex flex-col md:flex-row">
       {/* 列表區 - 佔滿全螢幕 */}
       <div className="w-full h-full flex flex-col bg-white shadow-xl">
         {/* 控制區 */}
