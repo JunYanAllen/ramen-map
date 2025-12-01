@@ -243,7 +243,7 @@ export default function RestaurantList({ places, userLocation }: RestaurantListP
                                             )}
 
                                             {/* Info */}
-                                            <div className="text-sm text-gray-800 space-y-1 font-medium">
+                                            <div className="text-sm text-gray-900 space-y-1 font-medium">
                                                 {details.formatted_phone_number && (
                                                     <p>📞 {details.formatted_phone_number}</p>
                                                 )}
@@ -263,10 +263,10 @@ export default function RestaurantList({ places, userLocation }: RestaurantListP
                                                             <div key={index} className="bg-white p-3 rounded border border-gray-200 text-sm">
                                                                 <div className="flex items-center gap-2 mb-1">
                                                                     <img src={review.profile_photo_url} alt={review.author_name} className="w-6 h-6 rounded-full" />
-                                                                    <span className="font-bold">{review.author_name}</span>
+                                                                    <span className="font-bold text-gray-900">{review.author_name}</span>
                                                                     <span className="text-yellow-500">★ {review.rating}</span>
                                                                 </div>
-                                                                <p className="text-gray-800 line-clamp-3">{review.text}</p>
+                                                                <p className="text-gray-900 line-clamp-3">{review.text}</p>
                                                                 <span className="text-xs text-gray-500 mt-1 block">{review.relative_time_description}</span>
                                                             </div>
                                                         ))}

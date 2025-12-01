@@ -213,14 +213,14 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <h2 className="text-2xl font-bold mb-2 text-center">設定您的位置</h2>
-            <p className="text-gray-600 text-center mb-6">請選擇一種方式來設定搜尋中心</p>
+            <h2 className="text-2xl font-bold mb-2 text-center text-gray-900">設定您的位置</h2>
+            <p className="text-gray-700 text-center mb-6">請選擇一種方式來設定搜尋中心</p>
 
             <div className="space-y-6 flex-1 flex flex-col overflow-y-auto px-2">
 
               {/* 選項 1: 系統定位 */}
               <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200 hover:border-blue-400 transition-colors">
-                <div className="font-bold text-blue-800 mb-2 flex items-center gap-2">
+                <div className="font-bold text-blue-900 mb-2 flex items-center gap-2">
                   <span className="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
                   使用系統定位
                 </div>
@@ -234,7 +234,7 @@ export default function Home() {
 
               {/* 選項 2: 輸入地址 */}
               <div className="bg-gray-50 p-4 rounded-lg border-2 border-gray-200 hover:border-gray-400 transition-colors">
-                <div className="font-bold text-gray-800 mb-2 flex items-center gap-2">
+                <div className="font-bold text-gray-900 mb-2 flex items-center gap-2">
                   <span className="bg-gray-200 text-gray-800 rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
                   輸入地址搜尋
                 </div>
@@ -252,7 +252,7 @@ export default function Home() {
 
               {/* 選項 3: 地圖選點 */}
               <div className="bg-gray-50 p-4 rounded-lg border-2 border-gray-200 hover:border-gray-400 transition-colors flex-1 flex flex-col min-h-[300px]">
-                <div className="font-bold text-gray-800 mb-2 flex items-center gap-2">
+                <div className="font-bold text-gray-900 mb-2 flex items-center gap-2">
                   <span className="bg-gray-200 text-gray-800 rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
                   在地圖上選擇
                 </div>
@@ -273,7 +273,7 @@ export default function Home() {
                       <Marker position={userLocation} />
                     )}
                   </GoogleMap>
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-bold text-gray-800 border border-gray-200 pointer-events-none whitespace-nowrap">
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-bold text-gray-900 border border-gray-200 pointer-events-none whitespace-nowrap">
                     {userLocation ? "點擊地圖可更改位置" : "請點擊地圖選擇位置"}
                   </div>
                 </div>
@@ -283,7 +283,7 @@ export default function Home() {
 
             <div className="pt-4 border-t flex justify-between items-center mt-4">
               <div className="text-sm text-gray-700 truncate max-w-[60%]">
-                <div>目前選擇：<span className="font-bold text-gray-800">{userLocation?.address || "尚未選擇"}</span></div>
+                <div>目前選擇：<span className="font-bold text-gray-900">{userLocation?.address || "尚未選擇"}</span></div>
                 {userLocation && (
                   <div className="text-xs text-gray-500 mt-1 font-mono">
                     ({userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)})
