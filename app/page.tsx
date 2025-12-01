@@ -135,22 +135,29 @@ export default function Home() {
           <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
             <h1 className="text-2xl font-bold text-gray-800">今天吃什麼？</h1>
             <div className="flex items-center gap-3">
-              <select
-                value={searchRadius}
-                onChange={(e) => setSearchRadius(Number(e.target.value))}
-                className="text-sm border border-gray-300 rounded-lg p-1 text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
-              >
-                <option value={500}>500m</option>
-                <option value={1000}>1km</option>
-                <option value={1500}>1.5km</option>
-                <option value={3000}>3km</option>
-                <option value={5000}>5km</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={searchRadius}
+                  onChange={(e) => setSearchRadius(Number(e.target.value))}
+                  className="appearance-none bg-gray-100 border border-gray-200 text-gray-700 text-sm rounded-full py-2 pl-4 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer hover:bg-gray-200 transition-colors"
+                >
+                  <option value={500}>500m</option>
+                  <option value={1000}>1km</option>
+                  <option value={1500}>1.5km</option>
+                  <option value={3000}>3km</option>
+                  <option value={5000}>5km</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                </div>
+              </div>
+
               <button
                 onClick={() => setIsLocationModalOpen(true)}
-                className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+                className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-full py-2 px-4 text-sm font-bold transition-all shadow-sm hover:shadow-md active:scale-95"
               >
-                📍 {userLocation ? userLocation.address : "設定位置"}
+                <span>📍</span>
+                <span className="truncate max-w-[150px] md:max-w-[200px]">{userLocation ? userLocation.address : "設定位置"}</span>
               </button>
             </div>
           </div>
@@ -159,7 +166,7 @@ export default function Home() {
             <button
               onClick={handleRandomSelect}
               disabled={isSearching}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-1"
+              className="bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-6 rounded-lg shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-1 border border-blue-800"
             >
               {isSearching ? "選擇中..." : "🎲 隨機選擇"}
             </button>
@@ -168,7 +175,7 @@ export default function Home() {
                 {displayFood ? displayFood.query : "請選擇"}
               </div>
               {displayFood && (
-                <div className="text-sm text-gray-500 mt-1">
+                <div className="text-sm text-gray-600 mt-1 font-medium">
                   {displayFood.category}
                 </div>
               )}
@@ -196,28 +203,37 @@ export default function Home() {
       {/* 位置設定 Modal */}
       {isLocationModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-2xl shadow-2xl flex flex-col h-[85vh]">
+          <div className="bg-white rounded-xl p-6 w-full max-w-2xl shadow-2xl flex flex-col h-[85vh] relative">
+            <button
+              onClick={() => setIsLocationModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-colors"
+              aria-label="Close modal"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
             <h2 className="text-2xl font-bold mb-2 text-center">設定您的位置</h2>
-            <p className="text-gray-500 text-center mb-6">請選擇一種方式來設定搜尋中心</p>
+            <p className="text-gray-600 text-center mb-6">請選擇一種方式來設定搜尋中心</p>
 
             <div className="space-y-6 flex-1 flex flex-col overflow-y-auto px-2">
 
               {/* 選項 1: 系統定位 */}
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+              <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200 hover:border-blue-400 transition-colors">
                 <div className="font-bold text-blue-800 mb-2 flex items-center gap-2">
                   <span className="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
                   使用系統定位
                 </div>
                 <button
                   onClick={handleUseCurrentLocation}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm"
                 >
                   📍 取得目前位置
                 </button>
               </div>
 
               {/* 選項 2: 輸入地址 */}
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+              <div className="bg-gray-50 p-4 rounded-lg border-2 border-gray-200 hover:border-gray-400 transition-colors">
                 <div className="font-bold text-gray-800 mb-2 flex items-center gap-2">
                   <span className="bg-gray-200 text-gray-800 rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
                   輸入地址搜尋
@@ -235,12 +251,12 @@ export default function Home() {
               </div>
 
               {/* 選項 3: 地圖選點 */}
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 flex-1 flex flex-col min-h-[300px]">
+              <div className="bg-gray-50 p-4 rounded-lg border-2 border-gray-200 hover:border-gray-400 transition-colors flex-1 flex flex-col min-h-[300px]">
                 <div className="font-bold text-gray-800 mb-2 flex items-center gap-2">
                   <span className="bg-gray-200 text-gray-800 rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
                   在地圖上選擇
                 </div>
-                <div className="flex-1 rounded-lg overflow-hidden border border-gray-300 relative">
+                <div className="flex-1 rounded-lg overflow-hidden border-2 border-gray-300 relative">
                   <GoogleMap
                     mapContainerStyle={{ width: '100%', height: '100%' }}
                     center={userLocation || { lat: 25.0330, lng: 121.5654 }} // Default to Taipei 101
@@ -257,7 +273,7 @@ export default function Home() {
                       <Marker position={userLocation} />
                     )}
                   </GoogleMap>
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-bold text-gray-700 pointer-events-none whitespace-nowrap">
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-bold text-gray-800 border border-gray-200 pointer-events-none whitespace-nowrap">
                     {userLocation ? "點擊地圖可更改位置" : "請點擊地圖選擇位置"}
                   </div>
                 </div>
@@ -266,14 +282,19 @@ export default function Home() {
             </div>
 
             <div className="pt-4 border-t flex justify-between items-center mt-4">
-              <div className="text-sm text-gray-600 truncate max-w-[60%]">
-                目前選擇：<span className="font-bold text-gray-800">{userLocation?.address || "尚未選擇"}</span>
+              <div className="text-sm text-gray-700 truncate max-w-[60%]">
+                <div>目前選擇：<span className="font-bold text-gray-800">{userLocation?.address || "尚未選擇"}</span></div>
+                {userLocation && (
+                  <div className="text-xs text-gray-500 mt-1 font-mono">
+                    ({userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)})
+                  </div>
+                )}
               </div>
               <div className="flex gap-2">
                 {userLocation && (
                   <button
                     onClick={() => setIsLocationModalOpen(false)}
-                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg shadow"
+                    className="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-6 rounded-lg shadow border border-blue-800"
                   >
                     確認使用此位置
                   </button>

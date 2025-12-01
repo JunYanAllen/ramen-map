@@ -79,17 +79,17 @@ export default function RestaurantList({ places, userLocation }: RestaurantListP
 
     if (!userLocation) {
         return (
-            <div className="h-full w-full flex flex-col items-center justify-center p-8 text-center text-gray-500">
+            <div className="h-full w-full flex flex-col items-center justify-center p-8 text-center text-gray-600">
                 <div className="text-6xl mb-4">📍</div>
-                <h3 className="text-xl font-bold mb-2 text-gray-700">歡迎使用！</h3>
-                <p>請先設定您的位置，讓我們為您尋找附近的美食。</p>
+                <h3 className="text-xl font-bold mb-2 text-gray-800">歡迎使用！</h3>
+                <p className="font-medium">請先設定您的位置，讓我們為您尋找附近的美食。</p>
             </div>
         );
     }
 
     if (!places || places.length === 0) {
         return (
-            <div className="p-4 text-center text-gray-500">
+            <div className="p-4 text-center text-gray-600 font-medium">
                 尚未搜尋到店家，請先選擇食物類型。
             </div>
         );
@@ -97,7 +97,7 @@ export default function RestaurantList({ places, userLocation }: RestaurantListP
 
     return (
         <div className="h-full w-full overflow-y-auto bg-white p-4">
-            <h2 className="text-xl font-bold mb-4 text-gray-800">附近店家 ({places.length})</h2>
+            <h2 className="text-xl font-bold mb-4 text-gray-900">附近店家 ({places.length})</h2>
             <div className="space-y-4">
                 {sortedPlaces.map((place: any) => {
                     const isExpanded = expandedPlaceId === place.place_id;
@@ -106,7 +106,7 @@ export default function RestaurantList({ places, userLocation }: RestaurantListP
                     return (
                         <div
                             key={place.place_id}
-                            className={`border border-gray-200 rounded-lg p-3 transition-all cursor-pointer ${isExpanded ? 'bg-blue-50 ring-2 ring-blue-500' : 'hover:bg-gray-50'}`}
+                            className={`border border-gray-300 rounded-lg p-3 transition-all cursor-pointer ${isExpanded ? 'bg-blue-50 ring-2 ring-blue-600' : 'hover:bg-gray-50 hover:border-gray-400'}`}
                             onClick={() => handlePlaceClick(place.place_id)}
                         >
                             <div className="flex justify-between items-start">
@@ -118,12 +118,12 @@ export default function RestaurantList({ places, userLocation }: RestaurantListP
                                         </span>
                                     )}
                                     {place.price_level !== undefined && (
-                                        <span className="text-gray-600 font-medium text-sm mt-1">
+                                        <span className="text-gray-700 font-medium text-sm mt-1">
                                             {Array(place.price_level).fill('$').join('')}
                                         </span>
                                     )}
                                     {place.distance > 0 && (
-                                        <span className="text-xs text-blue-600 font-bold mt-1">
+                                        <span className="text-xs text-blue-700 font-bold mt-1">
                                             {place.distance < 1000
                                                 ? `${Math.round(place.distance)}m`
                                                 : `${(place.distance / 1000).toFixed(1)}km`}
@@ -131,7 +131,7 @@ export default function RestaurantList({ places, userLocation }: RestaurantListP
                                     )}
                                 </div>
                             </div>
-                            <p className="text-sm text-gray-600 mt-1">{place.vicinity}</p>
+                            <p className="text-sm text-gray-700 mt-1">{place.vicinity}</p>
                             <div className="mt-2 flex items-center justify-between">
                                 {(() => {
                                     // 判斷營業狀態的邏輯
@@ -150,15 +150,23 @@ export default function RestaurantList({ places, userLocation }: RestaurantListP
 
                                     // 2. 如果尚未確定 (null)，回退使用列表資料 (nearbySearch)
                                     if (isOpen === null && place.opening_hours) {
-                                        // 優先檢查 open_now (雖然過時，但在 nearbySearch 中最可靠)
-                                        // @ts-ignore: open_now is deprecated but necessary for nearbySearch results
-                                        if (place.opening_hours.open_now !== undefined) {
+                                        // 先嘗試使用 isOpen() (Google 建議的新方法)
+                                        if (place.opening_hours.isOpen) {
+                                            try {
+                                                const result = place.opening_hours.isOpen();
+                                                if (result !== undefined) {
+                                                    isOpen = result;
+                                                }
+                                            } catch (e) {
+                                                // isOpen() 有時會報錯，忽略並繼續嘗試 open_now
+                                            }
+                                        }
+
+                                        // 如果 isOpen() 失敗或未定義，才使用 open_now (會產生 Console 警告，但作為最後手段)
+                                        // @ts-ignore: open_now is deprecated
+                                        if (isOpen === null && place.opening_hours.open_now !== undefined) {
                                             // @ts-ignore
                                             isOpen = place.opening_hours.open_now;
-                                        }
-                                        // 備用: 嘗試使用 isOpen()
-                                        else if (place.opening_hours.isOpen) {
-                                            isOpen = place.opening_hours.isOpen();
                                         }
                                     }
 
@@ -178,7 +186,7 @@ export default function RestaurantList({ places, userLocation }: RestaurantListP
                                 })()}
 
                                 {place.user_ratings_total && (
-                                    <span className="text-xs text-gray-400">
+                                    <span className="text-xs text-gray-500 font-medium">
                                         ({place.user_ratings_total} 則評論)
                                     </span>
                                 )}
@@ -186,9 +194,9 @@ export default function RestaurantList({ places, userLocation }: RestaurantListP
 
                             {/* Expanded Details */}
                             {isExpanded && (
-                                <div className="mt-4 pt-4 border-t border-gray-200" onClick={(e) => e.stopPropagation()}>
+                                <div className="mt-4 pt-4 border-t border-gray-300" onClick={(e) => e.stopPropagation()}>
                                     {isLoadingDetails && !details ? (
-                                        <div className="text-center text-gray-500 py-4">載入詳細資訊中...</div>
+                                        <div className="text-center text-gray-600 py-4 font-medium">載入詳細資訊中...</div>
                                     ) : details ? (
                                         <div className="space-y-4">
                                             {/* Photos */}
@@ -206,12 +214,12 @@ export default function RestaurantList({ places, userLocation }: RestaurantListP
                                             )}
 
                                             {/* Info */}
-                                            <div className="text-sm text-gray-700 space-y-1">
+                                            <div className="text-sm text-gray-800 space-y-1 font-medium">
                                                 {details.formatted_phone_number && (
                                                     <p>📞 {details.formatted_phone_number}</p>
                                                 )}
                                                 {details.website && (
-                                                    <a href={details.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline block">
+                                                    <a href={details.website} target="_blank" rel="noopener noreferrer" className="text-blue-700 hover:underline block">
                                                         🌐 官方網站
                                                     </a>
                                                 )}
@@ -220,17 +228,17 @@ export default function RestaurantList({ places, userLocation }: RestaurantListP
                                             {/* Reviews */}
                                             {details.reviews && details.reviews.length > 0 && (
                                                 <div>
-                                                    <h4 className="font-bold text-gray-800 mb-2">最新評論</h4>
+                                                    <h4 className="font-bold text-gray-900 mb-2">最新評論</h4>
                                                     <div className="space-y-3">
                                                         {details.reviews.slice(0, 3).map((review: any, index: number) => (
-                                                            <div key={index} className="bg-white p-3 rounded border border-gray-100 text-sm">
+                                                            <div key={index} className="bg-white p-3 rounded border border-gray-200 text-sm">
                                                                 <div className="flex items-center gap-2 mb-1">
                                                                     <img src={review.profile_photo_url} alt={review.author_name} className="w-6 h-6 rounded-full" />
                                                                     <span className="font-bold">{review.author_name}</span>
                                                                     <span className="text-yellow-500">★ {review.rating}</span>
                                                                 </div>
-                                                                <p className="text-gray-600 line-clamp-3">{review.text}</p>
-                                                                <span className="text-xs text-gray-400 mt-1 block">{review.relative_time_description}</span>
+                                                                <p className="text-gray-800 line-clamp-3">{review.text}</p>
+                                                                <span className="text-xs text-gray-500 mt-1 block">{review.relative_time_description}</span>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -247,14 +255,14 @@ export default function RestaurantList({ places, userLocation }: RestaurantListP
                                                             window.open(`https://www.google.com/maps/search/?api=1&query=${query}${placeId}`, '_blank');
                                                         }
                                                     }}
-                                                    className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition-colors"
+                                                    className="w-full bg-blue-700 text-white py-2 rounded-lg font-bold hover:bg-blue-800 transition-colors border border-blue-800"
                                                 >
                                                     在 Google Maps 開啟
                                                 </button>
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="text-center text-red-500 py-2">無法載入詳細資訊</div>
+                                        <div className="text-center text-rose-600 py-2 font-bold">無法載入詳細資訊</div>
                                     )}
                                 </div>
                             )}
