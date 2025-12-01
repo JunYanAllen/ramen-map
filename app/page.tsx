@@ -133,7 +133,10 @@ export default function Home() {
         {/* 控制區 */}
         <div className="p-6 bg-white z-20 shadow-sm">
           <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-            <h1 className="text-2xl font-bold text-gray-800">今天吃什麼？</h1>
+            <div className="flex items-center gap-3">
+              <img src="/icon.png" alt="Logo" className="w-10 h-10 rounded-full shadow-sm object-cover" />
+              <h1 className="text-2xl font-bold text-gray-800">今天吃什麼？</h1>
+            </div>
             <div className="flex items-center gap-3">
               <div className="relative">
                 <select
