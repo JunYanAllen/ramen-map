@@ -123,19 +123,46 @@ export default function RestaurantList({ places, userLocation }: RestaurantListP
                             </div>
                             <p className="text-sm text-gray-600 mt-1">{place.vicinity}</p>
                             <div className="mt-2 flex items-center justify-between">
-                                {place.opening_hours && (
-                                    <span className={`text-sm font-bold ${place.opening_hours.isOpen && place.opening_hours.isOpen()
-                                        ? 'text-green-600'
-                                        : 'text-red-600'
-                                        }`}>
-                                        {place.opening_hours.isOpen && place.opening_hours.isOpen()
-                                            ? '營業中'
-                                            : '休息中'}
-                                    </span>
-                                )}
-                                {!place.opening_hours && (
-                                    <span className="text-sm text-gray-400">營業時間未知</span>
-                                )}
+                                {(() => {
+                                    // 判斷營業狀態的邏輯
+                                    const detail = placeDetails[place.place_id];
+                                    let isOpen: boolean | null = null;
+                                    let statusText = "營業時間未知";
+                                    let statusColor = "text-gray-400";
+
+                                    // 1. 優先使用詳細資料 (最準確)
+                                    if (detail?.opening_hours) {
+                                        isOpen = detail.opening_hours.isOpen ? (detail.opening_hours.isOpen() || null) : null;
+                                    }
+                                    // 2. 使用列表資料 (nearbySearch)
+                                    else if (place.opening_hours) {
+                                        // 優先檢查 open_now (雖然過時，但在 nearbySearch 中最可靠)
+                                        // @ts-ignore: open_now is deprecated but necessary for nearbySearch results
+                                        if (place.opening_hours.open_now !== undefined) {
+                                            // @ts-ignore
+                                            isOpen = place.opening_hours.open_now;
+                                        }
+                                        // 備用: 嘗試使用 isOpen()
+                                        else if (place.opening_hours.isOpen) {
+                                            isOpen = place.opening_hours.isOpen();
+                                        }
+                                    }
+
+                                    if (isOpen === true) {
+                                        statusText = "營業中";
+                                        statusColor = "text-green-600";
+                                    } else if (isOpen === false) {
+                                        statusText = "休息中";
+                                        statusColor = "text-red-600";
+                                    }
+
+                                    return (
+                                        <span className={`text-sm font-bold ${statusColor}`}>
+                                            {statusText}
+                                        </span>
+                                    );
+                                })()}
+
                                 {place.user_ratings_total && (
                                     <span className="text-xs text-gray-400">
                                         ({place.user_ratings_total} 則評論)
